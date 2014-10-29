@@ -18,7 +18,10 @@ import db.CoolWeatherDB;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -73,6 +76,17 @@ public class ChooseAreaActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		
+		//1、从SharedPreferences中读取city_selected标志位
+		//2、如果为true，说明当前已经选择过城市了，直接跳转。
+//		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+//		if (prefs.getBoolean("city_selected", false)) {
+//			Intent intent = new Intent(this,WeatherActivity.class);
+//			startActivity(intent);
+//			finish();
+//			return;
+//		}
+		
 		setContentView(R.layout.choose_area);
 		listView = (ListView) findViewById(R.id.list_view);
 		titleText = (TextView) findViewById(R.id.title_text);
@@ -94,6 +108,14 @@ public class ChooseAreaActivity extends Activity {
 				else if (currentLevel == LEVEL_CITY) {
 					selectedCity = cityList.get(index);
 					queryCounties();
+				}
+				//如果选择了县级选项，就启动WeatherActivity，把选中县的代号传下去。
+				else if (currentLevel == LEVEL_COUNTY) {
+					String countyCode = countyList.get(index).getCountyCode();
+					Intent intent = new Intent(ChooseAreaActivity.this,WeatherActivity.class);
+					intent.putExtra("county_code", countyCode);
+					startActivity(intent);
+					finish();
 				}
 			}
 
