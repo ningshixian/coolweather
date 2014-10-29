@@ -71,21 +71,30 @@ public class ChooseAreaActivity extends Activity {
 	 * 当前选中的级别
 	 */
 	private int currentLevel;
+	/*
+	 * 是否从WeatherActivity中跳转过来
+	 */
+	private boolean isFromWeatherActivity;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		
+		isFromWeatherActivity = getIntent().
+				getBooleanExtra("from_weather_activity", false);
+		
 		//1、从SharedPreferences中读取city_selected标志位
 		//2、如果为true，说明当前已经选择过城市了，直接跳转。
-//		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-//		if (prefs.getBoolean("city_selected", false)) {
-//			Intent intent = new Intent(this,WeatherActivity.class);
-//			startActivity(intent);
-//			finish();
-//			return;
-//		}
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		
+		//已经选择了城市且不是从WeatherActivity跳转过来的，才回直接跳转到WeatherActivity
+		if (prefs.getBoolean("city_selected", false)&& !isFromWeatherActivity) {
+			Intent intent = new Intent(this,WeatherActivity.class);
+			startActivity(intent);
+			finish();
+			return;
+		}
 		
 		setContentView(R.layout.choose_area);
 		listView = (ListView) findViewById(R.id.list_view);
@@ -283,6 +292,11 @@ public class ChooseAreaActivity extends Activity {
 			queryProvinces();
 		}
 		else {
+			//当按下Back键时，如果是从WeatherActivity跳转过来的，则重新回到WeatherActivity
+			if (isFromWeatherActivity) {
+				Intent intent = new Intent(this,WeatherActivity.class);
+				startActivity(intent);
+			}
 			finish();
 		}
 	}
