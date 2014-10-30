@@ -1,6 +1,7 @@
 package activity;
 
 
+import service.AutoUpdateService;
 import util.HttpCallbackListener;
 import util.HttpUtil;
 import util.Utility;
@@ -196,6 +197,10 @@ public class WeatherActivity extends Activity implements OnClickListener {
 		weatherInfoLayout.setVisibility(View.VISIBLE);
 		cityNameText.setVisibility(View.VISIBLE);
 		
+		//将自动更新服务加到showWeather()最后
+		//一旦选中城市成功更新天气后，将会一直在后台运行。
+		Intent intent = new Intent(this,AutoUpdateService.class);
+		startService(intent);
 	}
 
 	
