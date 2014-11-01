@@ -1,6 +1,9 @@
 package activity;
 
 
+import java.io.IOException;
+import java.net.URL;
+
 import service.AutoUpdateService;
 import util.HttpCallbackListener;
 import util.HttpUtil;
@@ -9,31 +12,52 @@ import util.Utility;
 import com.coolweather.app.R;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class WeatherActivity extends Activity implements OnClickListener {
-
+public class WeatherActivity extends BaseActivity implements OnClickListener {
+	final Handler handler2=new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+           ((ImageView) WeatherActivity.this.findViewById(msg.arg1)).setImageDrawable((Drawable)msg.obj);
+        }
+    };
 	private LinearLayout weatherInfoLayout;
 	/*
 	 * 用于显示城市名
 	 */
 	private TextView cityNameText;
 	/*
+	 * 用于显示城市Id
+	 */
+	private TextView cityId;
+	/*
 	 * 用于显示发布时间
 	 */
 	private TextView publishText;
+	/*
+	 * 用于显示天气图片
+	 */
+	private ImageView weatherImg1;
+	private ImageView weatherImg2;
 	/*
 	 * 用于显示天气描述信息
 	 */
@@ -49,7 +73,7 @@ public class WeatherActivity extends Activity implements OnClickListener {
 	/*
 	 * 用于显示当前日期
 	 */
-	private TextView currentDateText;
+	//private TextView currentDateText;
 	/*
 	 * 切换城市按钮
 	 */
@@ -58,22 +82,31 @@ public class WeatherActivity extends Activity implements OnClickListener {
 	 * 更新天气按钮
 	 */
 	private Button refreshWeather;
+	/*
+	 * 退出按钮
+	 */
+	private Button exitButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.weather_layout);
+		
 		//初始化各控件
 		weatherInfoLayout = (LinearLayout) findViewById(R.id.weather_info_layout);
 		cityNameText = (TextView) findViewById(R.id.city_name);
+		cityId = (TextView) findViewById(R.id.city_id);
 		publishText = (TextView) findViewById(R.id.publish_text);
+		weatherImg1 = (ImageView) findViewById(R.id.weather_img1);
+		weatherImg2 = (ImageView) findViewById(R.id.weather_img2);
 		weatherDespText = (TextView) findViewById(R.id.weather_desp);
 		temp1Text = (TextView) findViewById(R.id.temp1);
 		temp2Text = (TextView) findViewById(R.id.temp2);
-		currentDateText = (TextView) findViewById(R.id.current_date);
+		//currentDateText = (TextView) findViewById(R.id.current_date);
 		switchCity = (Button) findViewById(R.id.switch_city);
 		refreshWeather = (Button) findViewById(R.id.refresh_weather);
+		exitButton = (Button) findViewById(R.id.exit);
 		
 		//获取ChooseAreaActivity中的intent对象，尝试从intent中取出县级代号
 		String countyCode = getIntent().getStringExtra("county_code");
@@ -112,6 +145,11 @@ public class WeatherActivity extends Activity implements OnClickListener {
 				queryweatherInfo(weatherCode);
 			}
 			break;
+		
+		case R.id.exit:
+			ActivityCollector.finishAll();
+			finish();
+			break;
 
 		default:
 			break;
@@ -134,6 +172,44 @@ public class WeatherActivity extends Activity implements OnClickListener {
 		String address = "http://www.weather.com.cn/data/cityinfo/"+weatherCode+".html";
 		queryFromServer(address, "weatherCode");
 	}
+	/*
+	 * 查询天气代号所对应的天气的图片
+	 */
+	public void queryweatherImg(String weatherImg1,String weatherImg2)
+	{		
+		if (weatherImg1!=null && weatherImg2!=null) {
+			final String address1 = "http://www.weather.com.cn/m2/i/icon_weather/29x20/"+weatherImg1;
+			loadImage2(address1,R.id.weather_img1);
+			final String address2 = "http://www.weather.com.cn/m2/i/icon_weather/29x20/"+weatherImg2;
+			loadImage2(address2,R.id.weather_img2);
+		}
+		else if (weatherImg1!=null) {
+			final String address1 = "http://www.weather.com.cn/m2/i/icon_weather/29x20/"+weatherImg1;
+			loadImage2(address1,R.id.weather_img1);
+		}		
+				
+	}
+	
+	//采用handler+Thread模式实现多线程异步加载图片
+    private void loadImage2(final String url, final int id) {
+        Thread thread = new Thread(){
+            @Override
+            public void run() {
+              Drawable drawable = null;
+                   try {
+                       drawable = Drawable.createFromStream(new URL(url).openStream(), "image.png");
+                   } catch (IOException e) {
+                   }
+
+               Message message= handler2.obtainMessage() ;
+                message.arg1 = id;
+                message.obj = drawable;
+                handler2.sendMessage(message);
+            }
+        };
+        thread.start();
+        thread = null;
+   }
 	
 	/*
 	 * 根据传入的地址和类型去向服务器查询天气代号或者天气信息。
@@ -168,7 +244,9 @@ public class WeatherActivity extends Activity implements OnClickListener {
 						}
 					});
 				}
+				
 			}
+				
 			
 			@Override
 			public void onError(Exception e) {
@@ -192,8 +270,10 @@ public class WeatherActivity extends Activity implements OnClickListener {
 		temp1Text.setText(prefs.getString("temp1", ""));
 		temp2Text.setText(prefs.getString("temp2", ""));
 		weatherDespText.setText(prefs.getString("weather_desp", ""));
+		cityId.setText("天气代码 "+prefs.getString("weather_code", ""));
 		publishText.setText("今天"+prefs.getString("publish_time", "")+"发布");
-		currentDateText.setText(prefs.getString("current_data", ""));
+		//currentDateText.setText(prefs.getString("current_data", ""));
+		queryweatherImg(prefs.getString("weather_img1", ""),prefs.getString("weather_img2", ""));
 		weatherInfoLayout.setVisibility(View.VISIBLE);
 		cityNameText.setVisibility(View.VISIBLE);
 		
@@ -203,5 +283,18 @@ public class WeatherActivity extends Activity implements OnClickListener {
 		startService(intent);
 	}
 
+	@Override
+	public void onBackPressed() {
+		Intent intent = new Intent(WeatherActivity.this,ChooseAreaActivity.class);
+		startActivity(intent);
+		finish();
+	}
+	
+	@Override
+	protected void onDestroy() {		
+		super.onDestroy();		
+		}	 
 	
 }
+	
+

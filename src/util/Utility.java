@@ -107,15 +107,18 @@ public class Utility {
 			JSONObject weatherInfo = jsonObject.getJSONObject("weatherinfo");
 			String cityName = weatherInfo.getString("city");
 			String weatherCode = weatherInfo.getString("cityid");
+			String weatherImg1 = weatherInfo.getString("img1");
+			String weatherImg2 = weatherInfo.getString("img2");
 			String temp1 = weatherInfo.getString("temp1");
 			String temp2 = weatherInfo.getString("temp2");
 			String weatherDesp = weatherInfo.getString("weather");
 			String publishTime = weatherInfo.getString("ptime");
 			
-			Log.d("MainActivity", "cityname is"+cityName);
-			Log.d("MainActivity", "weatherCode is"+weatherCode);
+			//Log.d("MainActivity", "cityname is"+cityName);
+			//Log.d("MainActivity", "weatherCode is"+weatherCode);
 			
 			saveWeatherInfo(context,cityName,weatherCode,temp1,temp2,
+					weatherImg1,weatherImg2,
 					weatherDesp,publishTime);
 					
 		} catch (Exception e) {
@@ -128,6 +131,7 @@ public class Utility {
 	 */
 	private static void saveWeatherInfo(Context context,String cityName,
 			String weatherCode,String temp1,String temp2,
+			String weatherImg1,String weatherImg2,
 			String weatherDesp,String publishTime) {
 
 		//格式化日期--sdf.format(new Date())输出当前具体时间
@@ -141,6 +145,9 @@ public class Utility {
 		editor.putString("weather_code", weatherCode);
 		editor.putString("temp1", temp1);
 		editor.putString("temp2", temp2);
+		
+		editor.putString("weather_img1", weatherImg1);
+		editor.putString("weather_img2", weatherImg2);
 		editor.putString("weather_desp", weatherDesp);
 		editor.putString("publish_time", publishTime);
 		editor.putString("current_date", sdf.format(new Date()));

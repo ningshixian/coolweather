@@ -42,6 +42,7 @@ public class AutoUpdateService extends Service {
 		Intent i = new Intent(this,AutoUpdateReceiver.class);
 		PendingIntent pi = PendingIntent.getBroadcast(this, 0, i, 0);
 		manager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pi);
+		//stopSelf();
 		return super.onStartCommand(intent, flags, startId);
 		
 	}
